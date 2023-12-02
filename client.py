@@ -4,19 +4,23 @@ import pickle
 import time
 import threading
 
+import pygame as pg
+
 class Client():
     def __init__(self):
         self.__client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.__connected = False
+        self._connected = False
         self._ping = 0
         self.__time = time.time()
         self.__current_time = time.time()
         self.__timeout = 10
         self.__client.settimeout(2)
+        self.__clock = pg.time.Clock()
+
         self.address = None
         self.player = None
         self.characters = []
-
+        
     def __connect(self):
         for i in range(4):
             msg = {
@@ -34,7 +38,7 @@ class Client():
                 if not signal == 'connected':
                     continue
                 if data:
-                    self.__connected = True
+                    self._connected = True
                     print(f'connected to {self.address}')
                     return True
                 print(f'connection rejected')
@@ -59,7 +63,7 @@ class Client():
             'data': None
             }
         self.__send(msg)
-        self.__connected = False
+        self._connected = False
 
     def __send(self, data):
         data = pickle.dumps(data)
@@ -77,16 +81,17 @@ class Client():
             'signal': 'ping',
             'data': None
         }
-        while self.__connected:
+        while self._connected:
             if self._ping > self.__timeout:
-                self.__connected = False
+                self.disconnect()
             self.__current_time = time.time()
             self._ping = self.__current_time - self.__time
             self.__send(msg)
-            time.sleep(1)
+            self.__clock.tick(60)
+            
           
     def __signal_handler(self):
-        while self.__connected:
+        while self._connected:
             try:
                 msg = self.__recive()
             except TimeoutError:
@@ -97,7 +102,7 @@ class Client():
                 case 'ping':
                     self.__time = time.time()
                 case 'disconnected':
-                    self.__connected = False
+                    self._connected = False
                 case 'message':
                     pass
                 case 'game_data':

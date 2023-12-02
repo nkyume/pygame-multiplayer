@@ -5,7 +5,7 @@ import pygame as pg
 import client
 from debug import debug
 
-ADDR = ('192.168.0.104', 47353)
+ADDR = ('31.200.237.17', 47353)
 
 class Game():
     def __init__(self):
@@ -27,6 +27,8 @@ class Game():
             'pos': self.player.rect.topleft
         }
         self.client.send_player_data()
+
+    # TODO: async player creation
 
     def draw_characrers(self):
         for character in self.client.characters:
@@ -50,8 +52,10 @@ class Game():
             self.draw_characrers()
             self.client.send_player_data({'pos': self.player.rect.topleft})
             self.player.draw(self.display)
+
+            # debug
             debug(int(self.clock.get_fps()))
-            debug(f'{"%.1f" % ((self.client._ping - 1)*1000)}ms', 30)
+            debug(f'{"%.0f" % ((self.client._ping)*1000)}ms', 30)
             pg.display.flip()
             
             self.clock.tick(60)

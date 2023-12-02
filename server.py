@@ -3,6 +3,7 @@ import threading
 import time
 import pickle
 import sys
+import pygame as pg
 
 from settings import *
 
@@ -11,7 +12,7 @@ class Server():
         print('[SERVER] initializing...')
         self.__server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.__server.bind(ADDR)
-
+        self.__clock = pg.time.Clock()
         self.__players = []
 
         self.__running = True
@@ -30,6 +31,13 @@ class Server():
         for connection in self.__players:
             self.__server.sendto(data, connection._address)
 
+    # TODO signal function
+    # def function_name(signal, data):
+        # msg = {
+        # 'signal': signal,
+        # 'data': data,
+        # }
+
     def find_connection(self, address):
         for connection in self.__players:
             if connection._address == address:
@@ -42,6 +50,7 @@ class Server():
     def __signal_handler(self, data, address):
         signal = data['signal']
         data = data['data']
+
         # check if connected
         match signal:
             case 'please_connect':
@@ -50,7 +59,7 @@ class Server():
                     return
             case _:
                 if not self.__is_connected(address):
-                    print(f'{address} is not connected. Reject.')
+                    print(f'{address} is not connected. Rejected.')
                     return
         
         match signal:
@@ -102,15 +111,21 @@ class Server():
             }
 
             self.send_for_all(msg)
-            time.sleep(0.01)
+            self.__clock.tick(60)
             
     def __connect(self, address):
-        # ids = []
-        # if self.players:
-        #     for player in self.players:
-        #         ids.append(player.__id)
+        
+        # unique id system 
+        self.__players.sort(key=lambda x: x._id)
+        expected_id = 0
+        for player in self.__players:
+            id = player._id
+            if id == expected_id:
+                expected_id += 1
+                continue
+            break
+        id = expected_id
 
-        id = len(self.__players)    
         connection = _Player(address, id)
         self.__players.append(connection)
         msg = {
@@ -146,7 +161,7 @@ class Server():
                 threading.Thread(target=self.__signal_handler, args=(data, address)).start()
             except KeyboardInterrupt:
                 self.__running = False
-                sys.exit('[SERVER] shuting down...')
+                sys.exit('\n[SERVER] shuting down...')
         
 class _Player():
     def __init__(self, address, id):
