@@ -1,63 +1,82 @@
 import sys
 import time
+import threading
+
 import pygame as pg
 
 import client
+import ui
 from debug import debug
-
-ADDR = ('31.200.237.17', 47353)
 
 class Game():
     def __init__(self):
         pg.init()
-        self.display = pg.display.set_mode((800, 600))
+        self.screen = pg.display.set_mode((800, 600))
+        pg.scrap.init()
         self.clock = pg.time.Clock()
         self.client = client.Client()
-
+        self.running = True
+        
+        self.player = None
         self.character_surf = pg.Surface((10,10))
         self.character_surf.fill('blue')
         
-    def create_player(self):
-        self.client.create_player()
-        time.sleep(0.1)
-        self.player = Player(self.client.player['pos'], self.client.player['id'])
+        self.state = 'menu'
+        self.main_menu = ui.MainMenu(self.client)
 
+    def create_player(self):
+        self.client.get_player()
+        if self.client.player:
+            pos = self.client.player['pos']
+            id = self.client.player['id']
+            self.player = Player(pos, id)
+                
     def send_player(self):
         data = {
             'pos': self.player.rect.topleft
         }
         self.client.send_player_data()
 
-    # TODO: async player creation
-
     def draw_characrers(self):
         for character in self.client.characters:
             if character['id'] == self.player.id:
                 continue
-            self.display.blit(self.character_surf, character['pos'])
+            self.screen.blit(self.character_surf, character['pos'])
 
     def run(self):
-        if not self.client.connect(ADDR):
-            pg.quit()
-            sys.exit()
-        self.create_player()
         while True:
-            for event in pg.event.get():
+            events = pg.event.get()
+            for event in events:
                 if event.type == pg.QUIT:
-                    self.client.disconnect()
+                    self.running = False
+                    if self.client._connected:
+                        self.client.disconnect()
                     pg.quit()
                     sys.exit()
+            self.screen.fill('black')
 
-            self.display.fill('black')
-            self.draw_characrers()
-            self.client.send_player_data({'pos': self.player.rect.topleft})
-            self.player.draw(self.display)
+            if self.state == 'menu':
+                self.main_menu.draw(events)
+                if self.client._connected:
+                    self.state = 'game'
+
+            if self.state == 'game':
+                if self.player:
+                    self.draw_characrers()
+                    self.client.send_player_data({'pos': self.player.rect.topleft})
+                    self.player.draw(self.screen)
+                else:
+                    self.create_player()
+                if not self.client._connected:
+                    self.state = 'menu'
 
             # debug
-            debug(int(self.clock.get_fps()))
-            debug(f'{"%.0f" % ((self.client._ping)*1000)}ms', 30)
-            pg.display.flip()
             
+            debug(f'{"%.0f" % ((self.client._ping)*1000)}ms', 30)
+
+            debug(int(self.clock.get_fps()))
+
+            pg.display.flip()
             self.clock.tick(60)
 
 class Player(pg.sprite.Sprite):

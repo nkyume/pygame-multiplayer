@@ -38,52 +38,47 @@ class Server():
         # 'data': data,
         # }
 
-    def find_connection(self, address):
+    def __find_connection(self, address):
         for connection in self.__players:
             if connection._address == address:
                 return connection
-
-    def __is_connected(self, address):
-        if self.find_connection(address):
-            return True
-
+    
     def __signal_handler(self, data, address):
         signal = data['signal']
         data = data['data']
-
+        
         # check if connected
+        connection = self.__find_connection(address)
         match signal:
             case 'please_connect':
-                if self.__is_connected(address):
+                if connection:
                     print(f'{address} already connected')
                     return
             case _:
-                if not self.__is_connected(address):
+                if not connection:
                     print(f'{address} is not connected. Rejected.')
                     return
         
         match signal:
             case 'please_connect':
                 self.__connect(address)
+                return
             case 'please_disconnect':
-                for connection in self.__players:
-                    if connection._address == address:
-                        self.__disconnect(connection)
-                        break
+                self.__disconnect(connection)
+                return
             case 'message':
                 print(data['data'])
             case 'create_player':
                 msg = {
                     'signal': 'create_player',
                     'data': {
-                        'id': self.find_connection(address)._id,
+                        'id': connection._id,
                         'pos': (200,200)
                     }
                 }
                 self.send(msg, address)
             case 'recive_player_data':
-                player = self.find_connection(address)
-                player._pos = data['pos']
+                connection._pos = data['pos']
             case 'ping':
                 msg = {
                     'signal': 'ping',
@@ -91,12 +86,13 @@ class Server():
                 }
                 self.send(msg, address)
         
-        self.__update_connection(address)
+        connection._time = time.time()
 
     def __update_game_data(self):
         while self.__running:
             data = []
             if not self.__players:
+                self.__clock.tick(60)
                 continue
             for player in self.__players:
                 player_data = {
@@ -143,25 +139,20 @@ class Server():
             for connection in self.__players:
                 if not connection.is_connected():
                     self.__disconnect(connection)
-            time.sleep(1)
-
-    def __update_connection(self, address):
-        for connection in self.__players:
-            if connection._address == address:
-                connection._time = time.time()
-                break
+            self.__clock.tick(1)
 
     def run(self):
         print('[SERVER] running')
         threading.Thread(target=self.__update_game_data).start()
         threading.Thread(target=self.__connection_checker).start()
-        while self.__running:
-            try:
+        try:
+            while self.__running:
                 data, address = self.recive()
-                threading.Thread(target=self.__signal_handler, args=(data, address)).start()
-            except KeyboardInterrupt:
-                self.__running = False
-                sys.exit('\n[SERVER] shuting down...')
+                if data:
+                    threading.Thread(target=self.__signal_handler, args=(data, address)).start()
+        except KeyboardInterrupt:
+            self.__running = False
+            sys.exit('\n[SERVER] shuting down...')
         
 class _Player():
     def __init__(self, address, id):

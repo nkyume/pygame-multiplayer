@@ -10,6 +10,8 @@ class Client():
     def __init__(self):
         self.__client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._connected = False
+        self._connecting = False
+
         self._ping = 0
         self.__time = time.time()
         self.__current_time = time.time()
@@ -20,8 +22,10 @@ class Client():
         self.address = None
         self.player = None
         self.characters = []
+        self.projectiles = []
         
     def __connect(self):
+        self._connecting = True
         for i in range(4):
             msg = {
             'signal': 'please_connect',
@@ -40,9 +44,13 @@ class Client():
                 if data:
                     self._connected = True
                     print(f'connected to {self.address}')
+                    self._connecting = False
                     return True
                 print(f'connection rejected')
-    
+        self._connecting = False
+        
+    # TODO: address validation
+
     def send_player_data(self, data):
         msg = {
             'signal': 'recive_player_data',
@@ -50,7 +58,7 @@ class Client():
         }
         self.__send(msg)
 
-    def create_player(self):
+    def get_player(self):
         msg = {
             'signal': 'create_player',
             'data': None
@@ -89,7 +97,6 @@ class Client():
             self.__send(msg)
             self.__clock.tick(60)
             
-          
     def __signal_handler(self):
         while self._connected:
             try:
@@ -112,6 +119,8 @@ class Client():
         return
 
     def connect(self, address):
+        self.__time = time.time()
+        self.__current_time = time.time()
         self.address = address
         try:
             if not self.__connect():
@@ -122,11 +131,10 @@ class Client():
 
             connection = threading.Thread(target=self.__connection_checker)
             connection.start()
-            return True
+
         except FailedToConnect as e:
             print(e)
-            return False
-            
 
+            
 class FailedToConnect(Exception):
     "Failed to connect"
