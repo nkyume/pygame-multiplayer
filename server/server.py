@@ -13,7 +13,7 @@ class Server():
         self.__server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.__server.bind(ADDR)
         self.__clock = pg.time.Clock()
-        self.__players = []
+        self.__players = {}
 
         self.__running = True
     
@@ -28,7 +28,7 @@ class Server():
     
     def send_for_all(self, data):
         data = pickle.dumps(data)
-        for connection in self.__players:
+        for connection in self.__players.values():
             self.__server.sendto(data, connection._address)
 
     # TODO signal function
@@ -39,7 +39,7 @@ class Server():
         # }
 
     def __find_connection(self, address):
-        for connection in self.__players:
+        for connection in self.__players.values():
             if connection._address == address:
                 return connection
     
@@ -90,32 +90,35 @@ class Server():
 
     def __update_game_data(self):
         while self.__running:
-            data = []
-            if not self.__players:
-                self.__clock.tick(60)
-                continue
-            for player in self.__players:
-                player_data = {
-                    'id': player._id,
-                    'pos': player._pos
+            try:
+                data = {}
+                if not self.__players:
+                    self.__clock.tick(60)
+                    continue
+                for id, player in self.__players.items():
+                    player_data = {
+                        id: {
+                            'pos': player._pos,
+                            }
+                    }
+                    data.update(player_data)
+
+                msg = {
+                    'signal': 'game_data',
+                    'data': data
                 }
-                data.append(player_data)
 
-            msg = {
-                'signal': 'game_data',
-                'data': data
-            }
+                self.send_for_all(msg)
+                self.__clock.tick(60)
+            except RuntimeError as e:
+                print(e)
 
-            self.send_for_all(msg)
-            self.__clock.tick(60)
-            
+                
     def __connect(self, address):
         
         # unique id system 
-        self.__players.sort(key=lambda x: x._id)
         expected_id = 0
-        for player in self.__players:
-            id = player._id
+        for id in self.__players.keys():
             if id == expected_id:
                 expected_id += 1
                 continue
@@ -123,7 +126,7 @@ class Server():
         id = expected_id
 
         connection = _Player(address, id)
-        self.__players.append(connection)
+        self.__players[id] = connection
         msg = {
             'signal': 'connected',
             'data': True
@@ -132,14 +135,17 @@ class Server():
         
     def __disconnect(self, connection):
         print(f'[SERVER] {connection._address} disconnected')
-        self.__players.remove(connection)
+        self.__players.pop(connection._id)
 
     def __connection_checker(self):
-        while self.__running:   
-            for connection in self.__players:
-                if not connection.is_connected():
-                    self.__disconnect(connection)
-            self.__clock.tick(1)
+        while self.__running:
+            try:   
+                for connection in self.__players.values():
+                    if not connection.is_connected():
+                        self.__disconnect(connection)
+                self.__clock.tick(1)
+            except RuntimeError as e: 
+                print(e)
 
     def run(self):
         print('[SERVER] running')
@@ -169,6 +175,10 @@ class _Player():
         self._ping = current_time - self._time
         if self._ping < self.__timeout:
             return True
+    
+    def get_data(self):
+    # TODO: create function that returns dict with all necessary player data
+        pass 
 
 
 if __name__ == '__main__':

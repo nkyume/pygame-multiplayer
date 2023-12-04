@@ -28,8 +28,7 @@ class Game():
         self.client.get_player()
         if self.client.player:
             pos = self.client.player['pos']
-            id = self.client.player['id']
-            self.player = Player(pos, id)
+            self.player = Player(pos)
                 
     def send_player(self):
         data = {
@@ -38,8 +37,8 @@ class Game():
         self.client.send_player_data()
 
     def draw_characrers(self):
-        for character in self.client.characters:
-            if character['id'] == self.player.id:
+        for id, character in self.client.characters.items():
+            if id == self.client.player['id']:
                 continue
             self.screen.blit(self.character_surf, character['pos'])
 
@@ -58,6 +57,7 @@ class Game():
             if self.state == 'menu':
                 self.main_menu.draw(events)
                 if self.client._connected:
+                    print('connected')
                     self.state = 'game'
 
             if self.state == 'game':
@@ -68,20 +68,18 @@ class Game():
                 else:
                     self.create_player()
                 if not self.client._connected:
+                    self.player = None
                     self.state = 'menu'
 
             # debug
-            
             debug(f'{"%.0f" % ((self.client._ping)*1000)}ms', 30)
-
             debug(int(self.clock.get_fps()))
 
             pg.display.flip()
             self.clock.tick(60)
 
 class Player(pg.sprite.Sprite):
-    def __init__(self, pos, id):
-        self.id = id
+    def __init__(self, pos):
         self.surf = pg.Surface((10,10))
         self.surf.fill('green')
         self.rect = self.surf.get_rect(topleft=pos)
@@ -96,10 +94,14 @@ class Player(pg.sprite.Sprite):
             self.rect.x -= 3
         elif keys[pg.K_RIGHT]:
             self.rect.x += 3  
-            
+    
+    def destroy(self):
+        self.kill()
+
     def draw(self, display_surf):
         self.move()
         display_surf.blit(self.surf, self.rect)
+
 
 class Character(Player):
     def draw(self, display_surf):
