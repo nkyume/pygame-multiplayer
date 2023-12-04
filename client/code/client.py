@@ -15,12 +15,12 @@ class Client():
         self._ping = 0
         self.__time = time.time()
         self.__current_time = time.time()
-        self.__timeout = 10
+        self.__timeout = 2
         self.__client.settimeout(2)
         self.__clock = pg.time.Clock()
 
         self.address = None
-        self.player = None
+        self.player = {}
         self.characters = []
         self.projectiles = []
         
@@ -71,6 +71,7 @@ class Client():
             'data': None
             }
         self.__send(msg)
+        self._ping = 0
         self._connected = False
 
     def __send(self, data):
@@ -90,7 +91,7 @@ class Client():
             'data': None
         }
         while self._connected:
-            if self._ping > self.__timeout:
+            if self.__current_time - self.__time > self.__timeout:
                 self.disconnect()
             self.__current_time = time.time()
             self._ping = self.__current_time - self.__time
@@ -122,6 +123,9 @@ class Client():
         self.__time = time.time()
         self.__current_time = time.time()
         self.address = address
+        self.player = {}
+        self.characters = {}
+
         try:
             if not self.__connect():
                 raise FailedToConnect
