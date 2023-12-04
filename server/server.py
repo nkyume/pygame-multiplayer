@@ -13,7 +13,7 @@ class Server():
         self.__server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.__server.bind(ADDR)
         self.__clock = pg.time.Clock()
-        self.__players = []
+        self.__players = {}
 
         self.__running = True
     
@@ -94,9 +94,9 @@ class Server():
             if not self.__players:
                 self.__clock.tick(60)
                 continue
-            for player in self.__players:
+            for id, player in self.__players.items():
                 player_data = {
-                    'id': player._id,
+                    'id': id,
                     'pos': player._pos
                 }
                 data.append(player_data)
@@ -114,8 +114,7 @@ class Server():
         # unique id system 
         self.__players.sort(key=lambda x: x._id)
         expected_id = 0
-        for player in self.__players:
-            id = player._id
+        for id in self.__players.keys():
             if id == expected_id:
                 expected_id += 1
                 continue
@@ -123,7 +122,7 @@ class Server():
         id = expected_id
 
         connection = _Player(address, id)
-        self.__players.append(connection)
+        self.__players[id] = connection
         msg = {
             'signal': 'connected',
             'data': True
@@ -132,7 +131,7 @@ class Server():
         
     def __disconnect(self, connection):
         print(f'[SERVER] {connection._address} disconnected')
-        self.__players.remove(connection)
+        self.__players.pop(connection._id)
 
     def __connection_checker(self):
         while self.__running:   

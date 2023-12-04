@@ -24,6 +24,7 @@ class MainMenu():
         # main screen
         self.title_text_surf = self.big_font.render('Cool Catgirls RPG', False, 'white')
         self.title_text_rect = self.title_text_surf.get_rect(center=(400,150))
+
         self.version_text_surf = self.small_font.render('pre pre alpha v0.3', False, 'white')
         self.version_text_rect = self.version_text_surf.get_rect(center=(400,200))
 
@@ -112,12 +113,11 @@ class InputBox():
 
         self.box_rect.center = (self.pos)
 
-        
         text_surface = self.font.render(self.text, False, 'white')
         self.box_rect.w = max(self.width, text_surface.get_width() + 10)
 
         pg.draw.rect(display_surf, self.passive_color, self.box_rect)
         pg.draw.rect(display_surf, box_color, self.box_rect, 2)
-        display_surf.blit(text_surface, (self.box_rect.x + 5, self.box_rect.y + 5))
+        display_surf.blit(text_surface, (self.box_rect.x + 5, self.box_rect.y + 7))
 
         

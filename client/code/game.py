@@ -71,9 +71,7 @@ class Game():
                     self.state = 'menu'
 
             # debug
-            
             debug(f'{"%.0f" % ((self.client._ping)*1000)}ms', 30)
-
             debug(int(self.clock.get_fps()))
 
             pg.display.flip()
