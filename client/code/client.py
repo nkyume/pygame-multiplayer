@@ -58,10 +58,10 @@ class Client():
         }
         self.__send(msg)
 
-    def get_player(self):
+    def get_player(self, char_class):
         msg = {
             'signal': 'create_player',
-            'data': None
+            'data': char_class
         }
         self.__send(msg)
 

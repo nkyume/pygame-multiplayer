@@ -9,7 +9,6 @@ from settings import *
 
 class Server():
     def __init__(self):
-        print('[SERVER] initializing...')
         self.__server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.__server.bind(ADDR)
         self.__clock = pg.time.Clock()
@@ -38,6 +37,10 @@ class Server():
         # 'data': data,
         # }
 
+    def __console_message(self, message: str, sender='[SERVER]'):
+        local = time.localtime()
+        print(f'{local.tm_hour}:{local.tm_min}:{local.tm_min} {sender} {message}')
+
     def __find_connection(self, address):
         for connection in self.__players.values():
             if connection._address == address:
@@ -52,30 +55,31 @@ class Server():
         match signal:
             case 'please_connect':
                 if connection:
-                    print(f'{address} already connected')
+                    self.__console_message(f'{address} already connected')
                     return
             case _:
                 if not connection:
-                    print(f'{address} is not connected. Rejected.')
+                    self.__console_message(f'{address} is not connected. Rejected.')
                     return
         
         match signal:
             case 'please_connect':
                 self.__connect(address)
+                self.__console_message(f'{address} connected')
                 return
             case 'please_disconnect':
                 self.__disconnect(connection)
                 return
-            case 'message':
-                print(data['data'])
             case 'create_player':
                 msg = {
                     'signal': 'create_player',
                     'data': {
                         'id': connection._id,
-                        'pos': (200,200)
+                        'pos': (200,200),
                     }
                 }
+                connection._char_class = data
+                connection.player = True
                 self.send(msg, address)
             case 'recive_player_data':
                 connection._pos = data['pos']
@@ -85,7 +89,9 @@ class Server():
                     'data': None
                 }
                 self.send(msg, address)
-        
+            case 'chat_message':
+                self.__console_message(f'{data}', sender={address})
+
         connection._time = time.time()
 
     def __update_game_data(self):
@@ -96,12 +102,9 @@ class Server():
                     self.__clock.tick(60)
                     continue
                 for id, player in self.__players.items():
-                    player_data = {
-                        id: {
-                            'pos': player._pos,
-                            }
-                    }
-                    data.update(player_data)
+                    if not player.player:
+                        continue
+                    data[id] = player.get_data()
 
                 msg = {
                     'signal': 'game_data',
@@ -112,10 +115,8 @@ class Server():
                 self.__clock.tick(60)
             except RuntimeError as e:
                 print(e)
-
                 
     def __connect(self, address):
-        
         # unique id system 
         expected_id = 0
         for id in self.__players.keys():
@@ -134,7 +135,7 @@ class Server():
         self.send(msg, address)
         
     def __disconnect(self, connection):
-        print(f'[SERVER] {connection._address} disconnected')
+        self.__console_message(f'{connection._address} disconnected')
         self.__players.pop(connection._id)
 
     def __connection_checker(self):
@@ -148,7 +149,7 @@ class Server():
                 print(e)
 
     def run(self):
-        print('[SERVER] running')
+        self.__console_message('running')
         threading.Thread(target=self.__update_game_data).start()
         threading.Thread(target=self.__connection_checker).start()
         try:
@@ -158,17 +159,23 @@ class Server():
                     threading.Thread(target=self.__signal_handler, args=(data, address)).start()
         except KeyboardInterrupt:
             self.__running = False
-            sys.exit('\n[SERVER] shuting down...')
+            self.__console_message(f'shutting down...')
+            sys.exit()
         
 class _Player():
     def __init__(self, address, id):
-        print(f'[SERVER] {address} connected')
+        # connection data
         self._id = id
         self._address = address
         self._time = time.time()
         self._ping = 0
         self.__timeout = 10
+
+        # game data
+        self.player = False
         self._pos = (200, 200)
+        self._char_class = None
+        self._state = 'idle'
 
     def is_connected(self):
         current_time = time.time()
@@ -177,8 +184,13 @@ class _Player():
             return True
     
     def get_data(self):
-    # TODO: create function that returns dict with all necessary player data
-        pass 
+        # TODO: create function that returns dict with all necessary player data
+        data = {
+            'pos': self._pos,
+            'char_class': self._char_class
+            }
+    
+        return data
 
 
 if __name__ == '__main__':
