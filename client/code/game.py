@@ -27,6 +27,7 @@ class Game():
         self.font = pg.font.Font('../font/8bitOperatorPlus8-Regular.ttf', 48)
         self.state = 'menu'
         self.main_menu = ui.MainMenu(self.client)
+        
         self.catgirl_button = ui.Button(
                         (300, 200),
                         (100, 100),
@@ -59,7 +60,7 @@ class Game():
         }
         self.client.send_player_data()
 
-    def update_characrers(self):
+    def update_characters(self):
         for id, character in self.client.characters.items():
             if id == self.client.player['id']:
                 pass
@@ -78,8 +79,8 @@ class Game():
                 if not id in self.client.characters.keys():
                     character.destroy()
                     self.characters.pop(id)
-        except RuntimeError as e:
-            print(e)
+        except RuntimeError:
+            pass
                 
     def run(self):
         while True:
@@ -101,7 +102,7 @@ class Game():
 
             if self.state == 'game':
                 if self.player:
-                    self.update_characrers()
+                    self.update_characters()
                     self.client.send_player_data({'pos': self.player.rect.topleft})
                     self.player.draw(self.screen)
                 else:

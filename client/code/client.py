@@ -27,11 +27,7 @@ class Client():
     def __connect(self):
         self._connecting = True
         for i in range(4):
-            msg = {
-            'signal': 'please_connect',
-            'data': None
-            }
-            self.__send(msg)
+            self.send('please_connect')
             try:
                 msg = self.__recive()
                 data = msg['data']
@@ -52,25 +48,13 @@ class Client():
     # TODO: address validation
 
     def send_player_data(self, data):
-        msg = {
-            'signal': 'recive_player_data',
-            'data': data
-        }
-        self.__send(msg)
+        self.send('recive_player_data', data)
 
     def get_player(self, char_class):
-        msg = {
-            'signal': 'create_player',
-            'data': char_class
-        }
-        self.__send(msg)
+        self.send('create_player', char_class)
 
     def disconnect(self):
-        msg = {
-            'signal': 'please_disconnect',
-            'data': None
-            }
-        self.__send(msg)
+        self.send('please_disconnect')
         self._ping = 0
         self._connected = False
 
@@ -86,16 +70,12 @@ class Client():
         return data
 
     def __connection_checker(self):
-        msg = {
-            'signal': 'ping',
-            'data': None
-        }
         while self._connected:
             if self.__current_time - self.__time > self.__timeout:
                 self.disconnect()
             self.__current_time = time.time()
             self._ping = self.__current_time - self.__time
-            self.__send(msg)
+            self.send('ping')
             self.__clock.tick(60)
             
     def __signal_handler(self):
@@ -118,6 +98,13 @@ class Client():
                 case 'create_player':
                     self.player = data
         return
+    
+    def send(self, signal, data = None):
+        msg = {
+            'signal': signal,
+            'data': data
+        }
+        self.__send(msg)
 
     def connect(self, address):
         self.__time = time.time()
@@ -138,7 +125,6 @@ class Client():
 
         except FailedToConnect as e:
             print(e)
-
-            
+       
 class FailedToConnect(Exception):
     "Failed to connect"

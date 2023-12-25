@@ -20,7 +20,7 @@ class Server():
         data = pickle.dumps(data)
         self.__server.sendto(data, address)
 
-    def recive(self):
+    def receive(self):
         data, address = self.__server.recvfrom(1024)
         data = pickle.loads(data)
         return(data, address)
@@ -154,7 +154,7 @@ class Server():
         threading.Thread(target=self.__connection_checker).start()
         try:
             while self.__running:
-                data, address = self.recive()
+                data, address = self.receive()
                 if data:
                     threading.Thread(target=self.__signal_handler, args=(data, address)).start()
         except KeyboardInterrupt:
@@ -189,7 +189,6 @@ class _Player():
             'pos': self._pos,
             'char_class': self._char_class
             }
-    
         return data
 
 

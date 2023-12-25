@@ -3,7 +3,7 @@ import threading
 import pygame as pg
 
 
-class MainMenu():
+class MainMenu:
     def __init__(self, client):
         self.display_surface = pg.display.get_surface()
         self.client = client
@@ -48,8 +48,9 @@ class MainMenu():
             if not self.client._connecting:
                 self.state = 'main'
                     
-class InputBox():
-    def __init__(self,
+class InputBox:
+    def __init__(
+            self,
             pos: tuple,
             size: tuple,
             font: pg.font.Font,
@@ -57,7 +58,7 @@ class InputBox():
             passive_color,
             bg_color,
             font_color,
-            max_len = 0,
+            max_len=0,
             placeholder: str = ''):
         
         self.active_color = active_color
@@ -76,7 +77,7 @@ class InputBox():
         self.active = False
 
     def draw(self, display_surf, events) -> str:
-        """return string if enter pressed"""
+        """returns string if enter pressed"""
         for event in events:
             if event.type == pg.MOUSEBUTTONDOWN:
                 if self.box_rect.collidepoint(event.pos):
@@ -94,7 +95,7 @@ class InputBox():
                 if event.key == pg.K_RETURN:
                     text = self.text
                     self.text = ''
-                    return(text)
+                    return text
 
             # restrict string lenght        
             if event.type == pg.TEXTINPUT:
@@ -117,8 +118,9 @@ class InputBox():
         pg.draw.rect(display_surf, box_color, self.box_rect, 2)
         display_surf.blit(text_surface, (self.box_rect.x + 5, self.box_rect.y + 7))
 
-class Button():
-    def __init__(self,
+class Button:
+    def __init__(
+            self,
             pos: tuple,
             size: tuple,
             text: str,
@@ -150,18 +152,8 @@ class Button():
             color = self.pressed_color
             if mouse_keys[0]:
                 func(args)
-            
-                    
+                   
         pg.draw.rect(display_surf, self.bg_color, self.button_rect)
         display_surf.blit(self.text_surf, self.text_rect)
         pg.draw.rect(display_surf, color, self.button_rect, 4)
 
-        
-
-
-
-
-
-    
-
-        
