@@ -15,9 +15,8 @@ class Server(Networking):
         self.type = 'SERVER'
         self.__connections = {}
 
-        self.add_signal('player_data', self.get_player_data)
+        self.add_signal('player_data', self.set_player_data)
         self.add_signal('ping', self.__ping)
-        self.add_signal('please_connect', self.__on_connection)
 
     def __connected(self, address):
         if address in self.__connections:
@@ -45,29 +44,33 @@ class Server(Networking):
                 return
         elif signal == 'please_disconnect':
             self.__on_disconnection(address)
-        if signal not in self.__signals:
+
+        elif signal == 'please_connect':
+            self.log(f'{address} already connected')
+
+        if signal not in self._signals:
             return
 
         connection = self.__connections[address]
 
-        function = self.__signals[signal]
+        function = self._signals[signal]
         function(address, data)
 
         connection.time = pg.time.get_ticks()
 
     def send(self, address, signal, data):
-        self.__send(address, signal, data)
+        self._send(address, signal, data)
 
     def send_for_all(self, signal, data):
         message = {'signal': signal,
                    'data': data}
         message = pickle.dumps(message)
         for address in self.__connections.keys():
-            self.__socket.sendto(message, address)
+            self.socket.sendto(message, address)
 
     def __server_receive(self):
         while self.running:
-            message, address = self.__receive()
+            message, address = self.receive()
             if message:
                 signal = message['signal']
                 data = message['data']
@@ -87,7 +90,14 @@ class Server(Networking):
         id = expected_id
 
         self.__connections[address] = Connection(id)
-        self.send(address, 'connected', {'connected': True, 'id': id})
+        data = {
+            'connected': True,
+            'id': id,
+            'player_data': {
+                'pos': (100, 100)
+                }
+            }
+        self.send(address, 'connected', data)
         self.log(f'{address} connected')
 
     def __on_disconnection(self, address):
@@ -95,7 +105,7 @@ class Server(Networking):
         self.log(f'{address} disconnected')
         self.send(address, 'disconnected', {'reason': ''})
 
-    def get_player_data(self, address, data):
+    def set_player_data(self, address, data):
         player = self.__connections[address]
         player.set_data(data)
 
@@ -103,14 +113,19 @@ class Server(Networking):
         self.send(address, 'ping', True)
 
     def send_game_data(self):
-        data = {}
+        players = {}
         for player in self.__connections.values():
-            data[player.id] = player.get_data()
-        data['players'] = data
+            player_data = player.get_data()
+            if not player_data:
+                continue
+            players[player.id] = player.get_data()
+        data = {
+            'players': players
+        }
         self.send_for_all('game_data', data)
 
     def run(self, address):
-        self.__socket.bind(address)
+        self.socket.bind(address)
         self.running = True
 
         threading.Thread(target=self.__connection_checker, daemon=True).start()
