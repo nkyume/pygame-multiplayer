@@ -97,6 +97,7 @@ class Server(Networking):
                 'pos': (100, 100)
                 }
             }
+        self.__connections[address].set_data(data['player_data'])
         self.send(address, 'connected', data)
         self.log(f'{address} connected')
 

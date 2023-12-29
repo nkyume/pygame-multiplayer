@@ -26,7 +26,7 @@ class MainMenu:
         self.loading_rect = self.loading_text_surf.get_rect(center=(400, 300))
 
     def connecting(self):
-        while True:
+        while self.client.connecting or self.client.connected:
             events = pg.event.get()
             for event in events:
                 if event.type == pg.QUIT:
@@ -35,6 +35,7 @@ class MainMenu:
 
             self.screen.fill('black')
             self.screen.blit(self.loading_text_surf, self.loading_rect)
+
             if self.game.player:
                 status = self.game.run()
                 if not status:
@@ -43,6 +44,7 @@ class MainMenu:
                 self.game.create_player()
 
             pg.display.flip()
+            self.clock.tick(FPS)
 
     def settings(self):
         active = True

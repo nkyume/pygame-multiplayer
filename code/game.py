@@ -83,7 +83,6 @@ class Game:
                     sys.exit()
                 elif event.type == pg.KEYDOWN:
                     if event.key == pg.K_ESCAPE:
-                        print('esc')
                         self.exit()
                         return
 

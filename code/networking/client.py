@@ -97,7 +97,7 @@ class Client(Networking):
         self.__on_disconnection()
 
     def send_ping(self):
-        while True:
+        while self.running:
             if not self.ping_responce:
                 self.timer += 60
             self.ping_responce = False
@@ -114,7 +114,7 @@ class Client(Networking):
         self.ping_responce = True
 
     def __update_game_data(self, data):
-        self.game_data = data
+        self.game_data.update(data)
 
 
 if __name__ == '__main__':
