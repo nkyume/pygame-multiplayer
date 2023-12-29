@@ -77,7 +77,7 @@ class Client(Networking):
         self.signal_handler = threading.Thread(target=self.__signal_handler, daemon=True)
         self.signal_handler.start()
         threading.Thread(target=self.__connect, args=(address,), daemon=True).start()
-        threading.Thread(target=self.send_ping, daemon=True)
+        threading.Thread(target=self.send_ping, daemon=True).start()
 
     def __connect(self, address):
         self.address = address
@@ -89,6 +89,7 @@ class Client(Networking):
                 return
             self.send('please_connect')
             self.log(f'connecting [{i + 1}/4]')
+            i += 1
             time.sleep(1)
 
     def disconnect(self):
@@ -96,17 +97,18 @@ class Client(Networking):
         self.__on_disconnection()
 
     def send_ping(self):
-        self.ping_responce = False
-        self.send('ping', {})
-        self.time = pg.time.get_ticks()
-        if not self.ping_responce:
-            self.timer += 60
-
-        if self.timer > self.server_timeout:
-            self.__on_disconnection({'reason': 'timeout'})
-        self.clock.tick(1)
+        while True:
+            if not self.ping_responce:
+                self.timer += 60
+            self.ping_responce = False
+            self.send('ping', {})
+            self.time = pg.time.get_ticks()
+            if self.timer > self.server_timeout:
+                self.__on_disconnection({'reason': 'timeout'})
+            self.clock.tick(1)
 
     def __update_ping(self, data):
+        self.timer = 0
         current_time = pg.time.get_ticks()
         self.ping = current_time - self.time
         self.ping_responce = True

@@ -43,6 +43,7 @@ class InputBox:
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_v and event.mod & pg.KMOD_CTRL:
                     self.text += pg.scrap.get("text/plain;charset=utf-8").decode()
+                    self.text = self.text.replace('\x00', '')
                 if event.key == pg.K_BACKSPACE:
                     self.text = self.text[:-1]
                 if event.key == pg.K_RETURN:
