@@ -1,13 +1,7 @@
-import sys
-import time
-import threading
-
 import pygame as pg
 
-import client
 from game import Game
 import menus
-from debug import debug
 
 
 class App:
@@ -18,7 +12,6 @@ class App:
         pg.key.set_repeat(400, 50)
         self.clock = pg.time.Clock()
         self.running = True
-        self.client = client.Client()
 
         self.game = Game()
         self.state = 'menu'
