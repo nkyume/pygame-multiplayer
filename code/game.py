@@ -27,6 +27,7 @@ class Game:
             return
         player_data = self.client.game_data['player_data']
         self.player = Player(player_data['pos'], (self.camera,), self.hitboxes)
+        print('player created')
 
     def send_player(self):
         self.client.send('player_data', self.player.get_data())
@@ -60,14 +61,17 @@ class Game:
 
                 if col == 'x':
                     Tile((x, y), (self.camera, self.hitboxes))
+        print('level created')
 
     def exit(self):
+        print('extit')
         self.client.disconnect()
         self.camera.empty()
         self.hitboxes.empty()
         self.player = None
 
     def run(self):
+        print('game starde')
         self.create_level()
         running = True
         while running:
@@ -98,8 +102,9 @@ class Game:
             pg.display.flip()
 
             if not self.client.connected:
-                return
+                self.exit()
             self.clock.tick(FPS)
+        self.exit()
 
 
 class Camera(pg.sprite.Group):

@@ -114,11 +114,13 @@ class Server(Networking):
 
     def send_game_data(self):
         players = {}
+
         for player in self.__connections.values():
             player_data = player.get_data()
             if not player_data:
                 continue
             players[player.id] = player.get_data()
+
         data = {
             'players': players
         }
@@ -133,7 +135,10 @@ class Server(Networking):
 
         self.log('running')
         while self.running:
-            self.send_game_data()
+            try:
+                self.send_game_data()
+            except RuntimeError:
+                pass
             self.clock.tick(60)
 
 
