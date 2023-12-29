@@ -61,6 +61,7 @@ class Client(Networking):
             self.connecting = False
 
     def __on_disconnection(self, data=None):
+        self.log('disconnected')
         self.connected = False
         self.running = False
 
@@ -68,6 +69,7 @@ class Client(Networking):
         self._send(self.address, signal, data)
 
     def connect(self, address):
+        self.time = pg.time.get_ticks()
         self.running = True
         self.signal_handler = threading.Thread(target=self.__signal_handler, daemon=True)
         self.signal_handler.start()
@@ -76,13 +78,14 @@ class Client(Networking):
     def __connect(self, address):
         self.address = address
         self.connecting = True
-        for i in range(4):
-            if self.connected:
-                break
+        i = 0
+        while self.connecting:
+            if i > 3:
+                self.connecting = False
+                return
             self.send('please_connect')
             self.log(f'connecting [{i + 1}/4]')
             time.sleep(1)
-        self.connecting = False
 
     def disconnect(self):
         self.send('please_disconnect')
@@ -104,5 +107,4 @@ class Client(Networking):
 
 if __name__ == '__main__':
     client = Client()
-    client.start()
     client.connect(('192.168.0.104', 47353))
