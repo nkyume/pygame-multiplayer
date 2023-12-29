@@ -94,11 +94,10 @@ class Game:
             self.player.update()
             self.update_characters()
             self.send_player()
-            self.client.send_ping()
 
             # if self.state == 'menu':
             #     self.menu.draw()
-            debug(self.client.game_data)
+            debug(self.client.ping)
             pg.display.flip()
 
             if not self.client.connected:
