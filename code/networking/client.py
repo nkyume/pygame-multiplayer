@@ -76,6 +76,8 @@ class Client(Networking):
         self._send(self.address, signal, data)
 
     def connect(self, address):
+        self.connecting = True
+        self.address = address
         self.time = pg.time.get_ticks()
         self.running = True
         threading.Thread(target=self.__signal_handler, daemon=True).start()
@@ -83,8 +85,6 @@ class Client(Networking):
         threading.Thread(target=self.send_ping, daemon=True).start()
 
     def __connect(self, address):
-        self.address = address
-        self.connecting = True
         i = 0
         while self.connecting:
             if i > 3:
