@@ -104,7 +104,7 @@ class Server(Networking):
     def __on_disconnection(self, address):
         self.__connections.pop(address)
         self.log(f'{address} disconnected')
-        self.send(address, 'disconnected', {'reason': ''})
+        # self.send(address, 'disconnected', {'reason': ''})
 
     def set_player_data(self, address, data):
         player = self.__connections[address]

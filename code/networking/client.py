@@ -26,6 +26,7 @@ class Client(Networking):
         self.type = 'CLIENT'
         self.id = None
 
+        self.fail = False
         self.running = False
         self.connecting = False
         self.connected = False
@@ -76,6 +77,7 @@ class Client(Networking):
         self._send(self.address, signal, data)
 
     def connect(self, address):
+        self.fail = False
         self.connecting = True
         self.address = address
         self.time = pg.time.get_ticks()
@@ -89,6 +91,7 @@ class Client(Networking):
         while self.connecting:
             if i > 3:
                 self.connecting = False
+                self.fail = True
                 return
             self.send('please_connect')
             self.log(f'connecting [{i + 1}/4]')

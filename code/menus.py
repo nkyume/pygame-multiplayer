@@ -26,7 +26,7 @@ class MainMenu:
         self.loading_rect = self.loading_text_surf.get_rect(center=(400, 300))
 
     def connecting(self):
-        while self.client.connecting or self.client.connected:
+        while not self.client.fail:
             events = pg.event.get()
             for event in events:
                 if event.type == pg.QUIT:
