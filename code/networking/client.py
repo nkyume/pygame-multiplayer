@@ -31,12 +31,11 @@ class Client(Networking):
         self.connected = False
 
         self.ping_responce = False
-        self.time = pg.time.get_ticks()
+        self.time = 0
         self.server_timeout = 5000
         self.timer = 0
         self.ping = 0
 
-        self.signal_handler = None
         self.add_signal('connected', self.__on_connection)
         self.add_signal('disconnected', self.__on_disconnection)
         self.add_signal('game_data', self.__update_game_data)
@@ -67,6 +66,11 @@ class Client(Networking):
         self.log('disconnected')
         self.connected = False
         self.running = False
+        self.address = None
+        self.id = None
+        self.game_data = {}
+        self.timer = 0
+        self.ping = 0
 
     def send(self, signal, data=None):
         self._send(self.address, signal, data)
@@ -74,8 +78,7 @@ class Client(Networking):
     def connect(self, address):
         self.time = pg.time.get_ticks()
         self.running = True
-        self.signal_handler = threading.Thread(target=self.__signal_handler, daemon=True)
-        self.signal_handler.start()
+        threading.Thread(target=self.__signal_handler, daemon=True).start()
         threading.Thread(target=self.__connect, args=(address,), daemon=True).start()
         threading.Thread(target=self.send_ping, daemon=True).start()
 
