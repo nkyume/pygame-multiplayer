@@ -3,7 +3,7 @@ import threading
 
 import pygame as pg
 
-from pygame_networking import Networking
+from .pygame_networking import Networking
 
 
 ADDRESS = ('192.168.0.104', 47353)
@@ -21,6 +21,7 @@ class Client(Networking):
     def __init__(self):
         super().__init__()
         self.address = None
+        self.socket.settimeout(1)
 
         self.type = 'CLIENT'
         self.id = None
@@ -32,6 +33,7 @@ class Client(Networking):
         self.time = pg.time.get_ticks()
         self.ping = 0
 
+        self.signal_handler = None
         self.add_signal('connected', self.__on_connection)
         self.add_signal('disconnected', self.__on_disconnection)
         self.add_signal('game_data', self.__update_game_data)
@@ -41,7 +43,10 @@ class Client(Networking):
 
     def __signal_handler(self):
         while self.running:
-            message, address = self.receive()
+            try:
+                message, address = self.receive()
+            except TimeoutError:
+                continue
             signal = message['signal']
             data = message['data']
             function = self._signals[signal]
@@ -52,10 +57,10 @@ class Client(Networking):
             self.log('connected')
             self.id = data['id']
             self.game_data['player_data'] = data['player_data']
-            self.connecting = False
             self.connected = True
+            self.connecting = False
 
-    def __on_disconnection(self, data):
+    def __on_disconnection(self, data=None):
         self.connected = False
         self.running = False
 
@@ -63,14 +68,17 @@ class Client(Networking):
         self._send(self.address, signal, data)
 
     def connect(self, address):
-        threading.Thread(target=self.__connect, args=(address,)).start()
+        self.running = True
+        self.signal_handler = threading.Thread(target=self.__signal_handler, daemon=True)
+        self.signal_handler.start()
+        threading.Thread(target=self.__connect, args=(address,), daemon=True).start()
 
     def __connect(self, address):
         self.address = address
         self.connecting = True
         for i in range(4):
             if self.connected:
-                return
+                break
             self.send('please_connect')
             self.log(f'connecting [{i + 1}/4]')
             time.sleep(1)
@@ -78,8 +86,7 @@ class Client(Networking):
 
     def disconnect(self):
         self.send('please_disconnect')
-        self.connected = False
-        self.running = False
+        self.__on_disconnection()
 
     def send_ping(self):
         self.send('ping', {})
@@ -93,10 +100,6 @@ class Client(Networking):
 
     def __update_game_data(self, data):
         self.game_data = data
-
-    def start(self):
-        self.running = True
-        threading.Thread(target=self.__signal_handler).start()
 
 
 if __name__ == '__main__':

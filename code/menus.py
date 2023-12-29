@@ -1,9 +1,7 @@
 import sys
 
-import pygame as pg
-
-import ui
-from client import Client
+import gui
+from networking.client import Client
 from settings import *
 
 
@@ -13,7 +11,7 @@ class MainMenu:
         self.clock = pg.time.Clock()
 
         self.client = Client()
-        # self.settings = Settings()
+        self.settings_screen = Settings()
         self.game = game
 
         # main screen
@@ -28,42 +26,43 @@ class MainMenu:
         self.loading_rect = self.loading_text_surf.get_rect(center=(400, 300))
 
     def connecting(self):
+        while True:
+            events = pg.event.get()
+            for event in events:
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    sys.exit()
+
+            self.screen.fill('black')
+            self.screen.blit(self.loading_text_surf, self.loading_rect)
+            if self.game.player:
+                status = self.game.run()
+                if not status:
+                    return
+            elif self.client.connected:
+                self.game.create_player()
+
+            pg.display.flip()
+
+    def settings(self):
         active = True
         while active:
             events = pg.event.get()
             for event in events:
                 if event.type == pg.QUIT:
+                    active = False
                     pg.quit()
+                    sys.exit()
+                if event.type == pg.K_ESCAPE:
+                    active = False
 
             self.screen.fill('black')
-            self.screen.blit(self.loading_text_surf, self.loading_rect)
-            if self.client.connected:
-                self.game.create_player()
-            if self.game.player:
-                self.game.run()
+            self.settings_screen.draw()
             pg.display.flip()
-
-        return
-
-    # def settings(self):
-    #     active = True
-    #     while active:
-    #         events = pg.event.get()
-    #         for event in events:
-    #             if event.type == pg.QUIT:
-    #                 active = False
-    #                 pg.quit()
-    #                 sys.exit()
-    #             if event.type == pg.K_ESCAPE:
-    #                 active = False
-    #
-    #         self.screen.fill('black')
-    #         self.settings.draw()
-    #         pg.display.flip()
-    #         self.clock.tick(FPS)
+            self.clock.tick(FPS)
 
     def main_menu(self):
-        connect_box = ui.InputBox(
+        connect_box = gui.InputBox(
             (400, 300),
             (100, 30),
             TEXT_FONT_SMALL,
@@ -75,13 +74,13 @@ class MainMenu:
         )
 
         running = True
-        self.client.start()
         while running:
             events = pg.event.get()
             for event in events:
                 if event.type == pg.QUIT:
                     running = False
                     pg.quit()
+                    sys.exit()
 
             self.screen.fill('black')
 

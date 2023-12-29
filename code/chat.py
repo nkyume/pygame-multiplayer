@@ -1,6 +1,6 @@
 import pygame as pg
 
-from ui import InputBox
+from gui import InputBox
 from settings import *
 
 class ChatInput():

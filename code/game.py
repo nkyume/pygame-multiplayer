@@ -1,9 +1,6 @@
 import sys
 
-import pygame as pg
-
-from menus import IngameMenu
-from client import Client
+from networking.client import Client
 from tile import Tile
 from player import Player
 from debug import debug
@@ -24,9 +21,10 @@ class Game:
 
         self.characters = {}
         self.player = None
-        self.create_level()
 
     def create_player(self):
+        if 'player_data' not in self.client.game_data:
+            return
         player_data = self.client.game_data['player_data']
         self.player = Player(player_data['pos'], (self.camera,), self.hitboxes)
 
@@ -63,21 +61,27 @@ class Game:
                 if col == 'x':
                     Tile((x, y), (self.camera, self.hitboxes))
 
+    def exit(self):
+        self.client.disconnect()
+        self.camera.empty()
+        self.hitboxes.empty()
+        self.player = None
+
     def run(self):
-        print('game running')
+        self.create_level()
         running = True
         while running:
             events = pg.event.get()
             for event in events:
                 if event.type == pg.QUIT:
-                    running = False
+                    print('exit')
                     pg.quit()
-            for event in events:
-                if event.type == pg.K_ESCAPE:
-                    if self.state == 'menu':
-                        self.state = 'game'
-                    elif self.state == 'game':
-                        self.state = 'menu'
+                    sys.exit()
+                elif event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        print('esc')
+                        self.exit()
+                        return
 
             self.screen.fill('black')
 
@@ -87,12 +91,14 @@ class Game:
             self.update_characters()
             self.send_player()
             self.client.send_ping()
-            if not self.client.connected:
-                return
+
             # if self.state == 'menu':
             #     self.menu.draw()
             debug(self.client.game_data)
             pg.display.flip()
+
+            if not self.client.connected:
+                return
             self.clock.tick(FPS)
 
 
