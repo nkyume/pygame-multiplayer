@@ -25,15 +25,18 @@ class Client(Networking):
 
         self.type = 'CLIENT'
         self.id = None
-        self.server_timeout = 5000
+
+        self.fail = False
         self.running = False
         self.connecting = False
         self.connected = False
 
-        self.time = pg.time.get_ticks()
+        self.ping_responce = False
+        self.time = 0
+        self.server_timeout = 5000
+        self.timer = 0
         self.ping = 0
 
-        self.signal_handler = None
         self.add_signal('connected', self.__on_connection)
         self.add_signal('disconnected', self.__on_disconnection)
         self.add_signal('game_data', self.__update_game_data)
@@ -64,27 +67,35 @@ class Client(Networking):
         self.log('disconnected')
         self.connected = False
         self.running = False
+        self.address = None
+        self.id = None
+        self.game_data = {}
+        self.timer = 0
+        self.ping = 0
 
     def send(self, signal, data=None):
         self._send(self.address, signal, data)
 
     def connect(self, address):
+        self.fail = False
+        self.connecting = True
+        self.address = address
         self.time = pg.time.get_ticks()
         self.running = True
-        self.signal_handler = threading.Thread(target=self.__signal_handler, daemon=True)
-        self.signal_handler.start()
+        threading.Thread(target=self.__signal_handler, daemon=True).start()
         threading.Thread(target=self.__connect, args=(address,), daemon=True).start()
+        threading.Thread(target=self.send_ping, daemon=True).start()
 
     def __connect(self, address):
-        self.address = address
-        self.connecting = True
         i = 0
         while self.connecting:
             if i > 3:
                 self.connecting = False
+                self.fail = True
                 return
             self.send('please_connect')
             self.log(f'connecting [{i + 1}/4]')
+            i += 1
             time.sleep(1)
 
     def disconnect(self):
@@ -92,17 +103,24 @@ class Client(Networking):
         self.__on_disconnection()
 
     def send_ping(self):
-        self.send('ping', {})
-        current_time = pg.time.get_ticks()
-        self.ping = current_time - self.time
-        if self.ping > self.server_timeout:
-            self.__on_disconnection({'reason': 'timeout'})
+        while self.running:
+            if not self.ping_responce:
+                self.timer += 60
+            self.ping_responce = False
+            self.send('ping', {})
+            self.time = pg.time.get_ticks()
+            if self.timer > self.server_timeout:
+                self.__on_disconnection({'reason': 'timeout'})
+            self.clock.tick(1)
 
     def __update_ping(self, data):
-        self.time = pg.time.get_ticks()
+        self.timer = 0
+        current_time = pg.time.get_ticks()
+        self.ping = current_time - self.time
+        self.ping_responce = True
 
     def __update_game_data(self, data):
-        self.game_data = data
+        self.game_data.update(data)
 
 
 if __name__ == '__main__':

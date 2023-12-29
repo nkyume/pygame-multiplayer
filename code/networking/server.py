@@ -29,7 +29,7 @@ class Server(Networking):
                     if not connection.connected():
                         self.__on_disconnection(address)
 
-                self.clock.tick(60)
+                self.clock.tick(10)
             except RuntimeError:
                 pass
 
@@ -97,13 +97,14 @@ class Server(Networking):
                 'pos': (100, 100)
                 }
             }
+        self.__connections[address].set_data(data['player_data'])
         self.send(address, 'connected', data)
         self.log(f'{address} connected')
 
     def __on_disconnection(self, address):
         self.__connections.pop(address)
         self.log(f'{address} disconnected')
-        self.send(address, 'disconnected', {'reason': ''})
+        # self.send(address, 'disconnected', {'reason': ''})
 
     def set_player_data(self, address, data):
         player = self.__connections[address]
