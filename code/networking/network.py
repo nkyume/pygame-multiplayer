@@ -7,7 +7,7 @@ import pygame as pg
 BUFFER = 1024
 
 
-class Networking:
+class Network:
     def __init__(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.running = False

@@ -1,11 +1,12 @@
 import pygame as pg
 
-from gui import InputBox
-from settings import *
+from .elements import *
+from code.config import *
+
 
 class ChatInput():
     def __init__(self) -> None:
-        self.self.input_box = InputBox(
+        self.input_box = InputBox(
             (200,200),
             (200,30),
             self.font,

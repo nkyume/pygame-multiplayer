@@ -4,12 +4,12 @@ import pickle
 
 import pygame as pg
 
-from pygame_networking import Networking
+from network import Network
 
 BUFFER = 1024
 
 
-class Server(Networking):
+class Server(Network):
     def __init__(self):
         super().__init__()
         self.type = 'SERVER'

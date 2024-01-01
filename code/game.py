@@ -1,10 +1,10 @@
 import sys
 
-from networking.client import Client
-from tile import Tile
-from player import Player
-from debug import debug
-from settings import *
+from .networking.client import Client
+from .entites import Tile
+from .entites import Player, Character
+from .debug import debug
+from .config import *
 
 
 class Game:
@@ -16,7 +16,7 @@ class Game:
         self.camera = Camera()
         self.hitboxes = pg.sprite.Group()
 
-        #self.menu = IngameMenu()
+        # self.menu = IngameMenu()
         self.state = 'game'
 
         self.characters = {}
@@ -43,7 +43,7 @@ class Game:
                 continue
             else:
                 # connect
-                character = Player(player['pos'], (self.camera,), self.hitboxes)
+                character = Character(player['pos'], (self.camera,), self.hitboxes)
                 self.characters[id] = character
 
         for id in list(self.characters):
@@ -51,7 +51,11 @@ class Game:
             if id not in players.keys():
                 self.characters.pop(id).kill()
                 continue
+
             self.characters[id].rect.topleft = players[id]['pos']
+            if 'direction' in players[id]:
+                self.characters[id].direction.xy = players[id]['direction']
+            self.characters[id].update()
 
     def create_level(self):
         for row_index, row in enumerate(test_map):
@@ -86,7 +90,7 @@ class Game:
                         self.exit()
                         return
 
-            self.screen.fill('black')
+            self.screen.fill('gray')
 
             self.camera.draw(self.player)
 
@@ -97,6 +101,7 @@ class Game:
             # if self.state == 'menu':
             #     self.menu.draw()
             debug(self.client.ping)
+            debug(self.client.game_data, 30)
             pg.display.flip()
 
             if not self.client.connected:

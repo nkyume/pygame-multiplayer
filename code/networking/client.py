@@ -3,14 +3,14 @@ import threading
 
 import pygame as pg
 
-from .pygame_networking import Networking
+from .network import Network
 
 
 ADDRESS = ('192.168.0.104', 47353)
 BUFFER = 1024
 
 
-class Client(Networking):
+class Client(Network):
     __instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -78,7 +78,6 @@ class Client(Networking):
 
     def connect(self, address):
         self.fail = False
-        self.connecting = True
         self.address = address
         self.time = pg.time.get_ticks()
         self.running = True
@@ -88,6 +87,7 @@ class Client(Networking):
 
     def __connect(self, address):
         i = 0
+        self.connecting = True
         while self.connecting:
             if i > 3:
                 self.connecting = False

@@ -1,13 +1,13 @@
 import pygame as pg
 
-from game import Game
-import menus
+from code.game import Game
+from code.gui import MainMenu
 
 
 class App:
     def __init__(self):
         pg.init()
-        self.screen = pg.display.set_mode((800, 600))
+        self.screen = pg.display.set_mode((1280, 720))
         pg.scrap.init()
         pg.key.set_repeat(400, 50)
         self.clock = pg.time.Clock()
@@ -15,7 +15,7 @@ class App:
 
         self.game = Game()
         self.state = 'menu'
-        self.main_menu = menus.MainMenu(self.game)
+        self.main_menu = MainMenu(self.game)
 
     def run(self):
         self.main_menu.main_menu()

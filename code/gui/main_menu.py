@@ -1,8 +1,9 @@
 import sys
 
-import gui
-from networking.client import Client
-from settings import *
+from .elements import *
+from .settings import Settings
+from code.networking.client import Client
+from code.config import *
 
 
 class MainMenu:
@@ -64,7 +65,7 @@ class MainMenu:
             self.clock.tick(FPS)
 
     def main_menu(self):
-        connect_box = gui.InputBox(
+        connect_box = InputBox(
             (400, 300),
             (100, 30),
             TEXT_FONT_SMALL,
@@ -99,20 +100,6 @@ class MainMenu:
             self.clock.tick(FPS)
 
 
-class IngameMenu:
-    def __init__(self):
-        pass
-
-    def draw(self):
-        pass
-
-
-class Settings:
-    def __init__(self):
-        pass
-
-    def draw(self):
-        pass
 
 
 
